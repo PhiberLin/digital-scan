@@ -1,0 +1,190 @@
+C51 COMPILER V9.60.0.0   DISPLAY                                                           06/25/2019 22:06:59 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE DISPLAY
+OBJECT MODULE PLACED IN .\Objects\display.obj
+COMPILER INVOKED BY: D:\Program Files\Keil_v5\C51\BIN\C51.EXE display.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\display.lst) TABS(2) OBJECT(.\Objects\display.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <intrins.h>
+   3          
+   4          typedef unsigned char byte;
+   5          
+   6          //********I/O口定义********
+   7          sbit WE = P2^7;//位选，1为数据输入，0为数据锁定
+   8          sbit DU = P2^6;//段选，同上
+   9          
+  10          //********函数声明********
+  11          void clear(void);
+  12          void delay();   //@11.0592MHz
+  13          void send(unsigned char,unsigned char);
+  14          
+  15          /**************************************
+  16          名称：display
+  17          描述：在数码管上进行动态扫描显示字符
+  18          参数：
+  19          num   unsigned char型指针变量，所指向数组至少为8个字符
+  20                目前包括0123456789，若无显示则用*代替空位
+  21                可在字符后加上“.”来点亮该字符右下角“.”
+  22          示例：display("2016.06.25");
+  23                display("******16");
+  24                display("*03.**08.*");
+  25          **************************************/
+  26          void display(unsigned char * num)
+  27          {
+  28   1        byte data i;
+  29   1        byte xdata IO,datWe,offset;
+  30   1        clear();
+  31   1        datWe = 0xfe;
+  32   1        offset = 0;//由于“.“造成的偏移量置0
+  33   1        for(i = 0;i < 8;i++)
+  34   1        {
+  35   2          switch(*(num+i+offset))//判断所显示的数字，确定段选码
+  36   2          {
+  37   3            case '0': IO = 0x3F;  break;
+  38   3            case '1': IO = 0x06;  break;
+  39   3            case '2': IO = 0x5B;  break;
+  40   3            case '3': IO = 0x4F;  break;
+  41   3            case '4': IO = 0x66;  break;
+  42   3            case '5': IO = 0x6D;  break;
+  43   3            case '6': IO = 0x7D;  break;
+  44   3            case '7': IO = 0x07;  break;
+  45   3            case '8': IO = 0x7F;  break;
+  46   3            case '9': IO = 0x6F;  break;
+  47   3            case '*': IO = 0x00;  break;
+  48   3            case 'A': IO = 0x77;  break;
+  49   3            case 'a': IO = 0x77;  break;
+  50   3            case 'B': IO = 0x7C;  break;
+  51   3            case 'b': IO = 0x7C;  break;
+  52   3            case 'C': IO = 0x39;  break;
+  53   3            case 'c': IO = 0x39;  break;
+  54   3            case 'D': IO = 0x5E;  break;
+C51 COMPILER V9.60.0.0   DISPLAY                                                           06/25/2019 22:06:59 PAGE 2   
+
+  55   3            case 'd': IO = 0x5E;  break;
+  56   3            case 'E': IO = 0x79;  break;
+  57   3            case 'e': IO = 0x79;  break;
+  58   3            case 'F': IO = 0x71;  break;
+  59   3            case 'f': IO = 0x71;  break;
+  60   3            case 'H': IO = 0x76;  break;
+  61   3            case 'h': IO = 0x76;  break;
+  62   3            case 'N': IO = 0x37;  break;
+  63   3            case 'n': IO = 0x37;  break;
+  64   3            case 'U': IO = 0x3E;  break;
+  65   3            case 'u': IO = 0x3E;  break;
+  66   3            case 'O': IO = 0x5C;  break;
+  67   3            case 'o': IO = 0x5C;  break;
+  68   3            case 'P': IO = 0x73;  break;
+  69   3            case 'p': IO = 0x73;  break;
+  70   3            case 'R': IO = 0x50;  break;
+  71   3            case 'r': IO = 0x50;  break;
+  72   3            case '-': IO = 0x40;  break;
+  73   3            default:  IO = 0x00;  break;
+  74   3          }
+  75   2          if(*(num+i+offset+1) == '.')
+  76   2          {
+  77   3            IO += 0x80;
+  78   3            offset++;
+  79   3          }
+  80   2          send(IO,datWe);
+  81   2          clear();
+  82   2          datWe = _crol_(datWe,1);
+  83   2        }
+  84   1      }
+  85          
+  86          unsigned char * IntToStr(signed long int numInt)
+  87          {
+  88   1        byte xdata str[] = "********";
+  89   1        byte data i,flag;
+  90   1        byte * pointer;
+  91   1        long int num;
+  92   1        pointer = str + 7;
+  93   1        num = numInt;
+  94   1        if(num>99999999 || num<-9999999)
+  95   1          return "error";
+  96   1        if(num<0)
+  97   1        {
+  98   2          flag = 1;
+  99   2          num = -num;
+ 100   2        }
+ 101   1        for(i=0;i<8;i++)
+ 102   1        {
+ 103   2          byte chr;
+ 104   2          chr = num % 10;
+ 105   2          chr += '0';//将数字转换为ASCII码
+ 106   2          *pointer = chr;
+ 107   2          pointer--;
+ 108   2          num = num/10;
+ 109   2          if(num == 0)
+ 110   2            break;
+ 111   2        }
+ 112   1        if(flag == 1)
+ 113   1          *pointer = '-';
+ 114   1        return str;
+ 115   1      }
+ 116          
+C51 COMPILER V9.60.0.0   DISPLAY                                                           06/25/2019 22:06:59 PAGE 3   
+
+ 117          //清除数码管显示
+ 118          void clear()
+ 119          { 
+ 120   1        P0 = 0x00;
+ 121   1        DU = 1;
+ 122   1        DU = 0;
+ 123   1        delay();
+ 124   1        P0 = 0xff;
+ 125   1        WE = 1;
+ 126   1        WE = 0;
+ 127   1      }
+ 128          
+ 129          //软件延时，只用于数码管显示
+ 130          void delay()    //@11.0592MHz
+ 131          {
+ 132   1        unsigned char i, j;
+ 133   1      
+ 134   1        i = 2;
+ 135   1        j = 2;
+ 136   1        do
+ 137   1        {
+ 138   2          while (--j);
+ 139   2        } while (--i);
+ 140   1      }
+ 141          
+ 142          
+ 143          
+ 144          //向数码管锁存器传送数据，包括段码及位码
+ 145          /*****************************************
+ 146          参数：
+ 147          value 段码
+ 148          position 位码
+ 149          ******************************************/
+ 150          void send(unsigned char value,unsigned char position)
+ 151          {
+ 152   1        P0 = value;
+ 153   1        DU = 1;
+ 154   1        DU = 0;
+ 155   1        P0 = position;
+ 156   1        WE = 1;
+ 157   1        WE = 0;
+ 158   1        delay();
+ 159   1        P0 = 0xff;
+ 160   1        WE = 1;
+ 161   1        WE = 0;
+ 162   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    771    ----
+   CONSTANT SIZE    =     15    ----
+   XDATA SIZE       =   ----      12
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      18
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
