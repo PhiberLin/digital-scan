@@ -1,2 +1,2 @@
 void display(unsigned char *);
-unsigned char * IntToStr(signed long int);
+void displayInt(signed long int);

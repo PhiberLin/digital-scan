@@ -8,6 +8,7 @@ sbit WE = P2^7;//位选，1为数据输入，0为数据锁定
 sbit DU = P2^6;//段选，同上
 
 //********函数声明********
+void display(unsigned char *);
 void clear(void);
 void delay();		//@11.0592MHz
 void send(unsigned char,unsigned char);
@@ -59,6 +60,8 @@ void display(unsigned char * num)
 			case 'f': IO = 0x71; 	break;
 			case 'H': IO = 0x76; 	break;
 			case 'h': IO = 0x76; 	break;
+			case 'i':	IO = 0x04;	break;
+			case 'L':	IO = 0x38;	break;
 			case 'N': IO = 0x37; 	break;
 			case 'n': IO = 0x37; 	break;
 			case 'U': IO = 0x3E; 	break;
@@ -83,7 +86,18 @@ void display(unsigned char * num)
 	}
 }
 
-unsigned char * IntToStr(signed long int numInt)
+/**************************************
+名称：displayInt
+描述：在数码管上进行动态扫描显示整数
+参数：
+numInt	欲显示的整数，long int型变量，可正可负，
+				必须在-9999999~99999999之间，否则显示Error
+示例：displayInt(2301);
+			display(-9361523);
+			display(22336666);
+**************************************/
+
+void displayInt(signed long int numInt)
 {
 	byte xdata str[] = "********";
 	byte data i,flag;
@@ -92,7 +106,10 @@ unsigned char * IntToStr(signed long int numInt)
 	pointer = str + 7;
 	num = numInt;
 	if(num>99999999 || num<-9999999)
-		return "error";
+	{
+		display("error");
+		return;
+	}
 	if(num<0)
 	{
 		flag = 1;
@@ -111,7 +128,7 @@ unsigned char * IntToStr(signed long int numInt)
 	}
 	if(flag == 1)
 		*pointer = '-';
-	return str;
+	display(str);
 }
 
 //清除数码管显示
